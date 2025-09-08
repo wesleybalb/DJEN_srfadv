@@ -2,7 +2,6 @@ import { SearchService } from './services/searchService.js';
 import { DataProcessor } from './utils/dataProcessor.js';
 import { ExcelGenerator } from './utils/excelGenerator.js';
 import { UIManager } from './ui/uiManager.js';
-import loadModal from './utils/termsAndConditions.js';
 
 class CommunicationSearchApp {
     constructor() {
@@ -53,17 +52,30 @@ class CommunicationSearchApp {
             const searchResult = await this.searchService.searchCommunications(
                 formData,
                 (current, total) => {
-                    this.uiManager.showLoading(
-                        "Buscando comunicações...", 
-                        current, 
-                        total
-                    );
+                    const message = total ? 
+                        `Buscando comunicações... (${current}/${total} páginas)` : 
+                        `Buscando comunicações... (página ${current})`;
+                    this.uiManager.showLoading(message, current, total);
                 }
             );
 
+            // Log detalhado dos resultados
+            console.log('=== RESULTADO DA BUSCA ===');
+            console.log(`Itens coletados: ${searchResult.items.length}`);
+            console.log(`Itens esperados: ${searchResult.expectedTotal}`);
+            console.log(`Páginas processadas: ${searchResult.totalPages}`);
+            console.log(`Coleta completa: ${searchResult.collectionComplete ? 'Sim' : 'Não'}`);
+
             // Verifica se encontrou resultados
             if (searchResult.items.length === 0) {
-                this.uiManager.showSuccessModal(0, searchResult.totalPages, "Nenhum resultado encontrado");
+                this.uiManager.showSuccessModal(
+                    0, 
+                    searchResult.totalPages, 
+                    "Nenhum resultado encontrado",
+                    0,
+                    0,
+                    { expectedTotal: searchResult.expectedTotal }
+                );
                 return;
             }
 
@@ -79,13 +91,17 @@ class CommunicationSearchApp {
             this.uiManager.showLoading("Gerando arquivo Excel...");
             const fileName = ExcelGenerator.generateFile(processedData);
 
-            // Mostra resultado
+            // Mostra resultado com informações detalhadas
             this.uiManager.showSuccessModal(
                 deduplicationResult.uniqueItems.length,
                 searchResult.totalPages,
                 fileName,
                 deduplicationResult.duplicatesRemoved,
-                deduplicationResult.originalTotal
+                deduplicationResult.originalTotal,
+                {
+                    expectedTotal: searchResult.expectedTotal,
+                    collectionComplete: searchResult.collectionComplete
+                }
             );
 
         } catch (error) {

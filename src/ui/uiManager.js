@@ -113,9 +113,9 @@ export class UIManager {
     }
 
     /**
-     * Mostra modal de sucesso
+     * Mostra modal de sucesso (versão atualizada)
      */
-    showSuccessModal(totalRecords, pagesSearched, fileName, duplicatesRemoved = 0, originalTotal = 0) {
+    showSuccessModal(totalRecords, pagesSearched, fileName, duplicatesRemoved = 0, originalTotal = 0, additionalInfo = {}) {
         this.hideLoading();
         
         const modal = document.createElement("div");
@@ -139,9 +139,25 @@ export class UIManager {
                 <strong>${totalRecords}</strong> comunicações únicas encontradas
             </div>
             <div style="margin-bottom: 10px; font-size: 14px; color: #666;">
-                ${pagesSearched} página(s) pesquisada(s)
+                ${pagesSearched} página(s) processada(s)
             </div>
         `;
+        
+        // Adiciona informação sobre total esperado se disponível
+        if (additionalInfo.expectedTotal && additionalInfo.expectedTotal > 0) {
+            const completionStatus = additionalInfo.collectionComplete ? 
+                '<span style="color: #059669;">✓ Coleta completa</span>' : 
+                '<span style="color: #d97706;">⚠ Coleta parcial</span>';
+            
+            summaryContent += `
+                <div style="margin-bottom: 10px; font-size: 14px; color: #666;">
+                    Total esperado pela API: <strong>${additionalInfo.expectedTotal}</strong>
+                </div>
+                <div style="margin-bottom: 10px; font-size: 14px;">
+                    Status: ${completionStatus}
+                </div>
+            `;
+        }
         
         if (duplicatesRemoved > 0) {
             summaryContent += `
@@ -149,7 +165,7 @@ export class UIManager {
                     ${duplicatesRemoved} duplicata(s) removida(s)
                 </div>
                 <div style="margin-bottom: 10px; font-size: 12px; color: #999;">
-                    Total original: ${originalTotal} registros
+                    Total original coletado: ${originalTotal} registros
                 </div>
             `;
         }

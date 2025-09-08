@@ -13,8 +13,8 @@ export class ApiService {
         const url = new URL(this.baseUrl);
         
         // Adiciona parâmetros obrigatórios
-        url.searchParams.set('page', page);
-        url.searchParams.set('size', API_CONFIG.PAGE_SIZE);
+        url.searchParams.set('pagina', page);
+        url.searchParams.set('itensPorPagina', API_CONFIG.PAGE_SIZE);
         
         // Adiciona parâmetros opcionais se fornecidos
         if (params.nomeParte) url.searchParams.set('nomeParte', params.nomeParte);

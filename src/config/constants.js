@@ -2,7 +2,7 @@
 export const API_CONFIG = {
     BASE_URL: 'https://comunicaapi.pje.jus.br/api/v1/comunicacao',
     TIMEOUT: 30000,
-    MAX_PAGES: 1000,
+    MAX_PAGES: 100,
     PAGE_SIZE: 100,
     MAX_ERROR_RETRIES: 3,
     REQUEST_DELAY: 300,
