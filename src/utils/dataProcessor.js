@@ -50,7 +50,7 @@ export class DataProcessor {
     }
 
     /**
-     * Processa dados para Excel
+     * Processa dados para Excel (versão atualizada)
      */
     static processForExcel(items) {
         console.log('=== PROCESSANDO DADOS PARA EXCEL ===');
@@ -61,7 +61,8 @@ export class DataProcessor {
                 console.log(`Processando item ${index + 1}:`, {
                     id: item.id,
                     data: item.data_disponibilizacao,
-                    tribunal: item.siglaTribunal
+                    tribunal: item.siglaTribunal,
+                    source: item._source || 'Consulta Manual'
                 });
             }
             
@@ -80,7 +81,8 @@ export class DataProcessor {
                 "Status": item.status || "",
                 "Meio": item.meiocompleto || "",
                 "Destinatários": (item.destinatarios || []).map(dest => dest.nome).join(", "),
-                "Advogados": (item.destinatarioadvogados || []).map(adv => adv.advogado.nome).join(", ")
+                "Advogados": (item.destinatarioadvogados || []).map(adv => adv.advogado.nome).join(", "),
+                "Fonte da Consulta": item._source || "Consulta Manual" // Nova coluna
             };
         });
     }
