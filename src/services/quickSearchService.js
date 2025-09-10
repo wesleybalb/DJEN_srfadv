@@ -49,20 +49,25 @@ export class QuickSearchService {
                     siglaTribunal: ''
                 };
 
-                const result = await this.searchService.searchCommunications(params);
-                
-                if (result.items.length > 0) {
-                    // Adiciona metadados de origem
-                    const itemsWithSource = result.items.map(item => ({
-                        ...item,
-                        _source: `OAB ${oab.numero}/${oab.uf}`,
-                        _sourceType: 'OAB'
-                    }));
+                try {
+                    const result = await this.searchService.searchCommunications(params);
                     
-                    allResults.push(...itemsWithSource);
-                    console.log(`✅ OAB ${oab.numero}/${oab.uf}: ${result.items.length} itens encontrados`);
-                } else {
-                    console.log(`ℹ️ OAB ${oab.numero}/${oab.uf}: Nenhum item encontrado`);
+                    if (result.items.length > 0) {
+                        // Adiciona metadados de origem
+                        const itemsWithSource = result.items.map(item => ({
+                            ...item,
+                            _source: `OAB ${oab.numero}/${oab.uf}`,
+                            _sourceType: 'OAB'
+                        }));
+                        
+                        allResults.push(...itemsWithSource);
+                        console.log(`✅ OAB ${oab.numero}/${oab.uf}: ${result.items.length} itens encontrados`);
+                    } else {
+                        console.log(`ℹ️ OAB ${oab.numero}/${oab.uf}: Nenhum item encontrado`);
+                    }
+                } catch (error) {
+                    console.error(`❌ Erro na consulta OAB ${oab.numero}/${oab.uf}:`, error);
+                    // Continua com as outras consultas mesmo se uma falhar
                 }
 
                 // Pausa entre consultas
@@ -89,20 +94,25 @@ export class QuickSearchService {
                     siglaTribunal: ''
                 };
 
-                const result = await this.searchService.searchCommunications(params);
-                
-                if (result.items.length > 0) {
-                    // Adiciona metadados de origem
-                    const itemsWithSource = result.items.map(item => ({
-                        ...item,
-                        _source: `CNPJ ${cnpj}`,
-                        _sourceType: 'CNPJ'
-                    }));
+                try {
+                    const result = await this.searchService.searchCommunications(params);
                     
-                    allResults.push(...itemsWithSource);
-                    console.log(`✅ CNPJ ${cnpj}: ${result.items.length} itens encontrados`);
-                } else {
-                    console.log(`ℹ️ CNPJ ${cnpj}: Nenhum item encontrado`);
+                    if (result.items.length > 0) {
+                        // Adiciona metadados de origem
+                        const itemsWithSource = result.items.map(item => ({
+                            ...item,
+                            _source: `CNPJ ${cnpj}`,
+                            _sourceType: 'CNPJ'
+                        }));
+                        
+                        allResults.push(...itemsWithSource);
+                        console.log(`✅ CNPJ ${cnpj}: ${result.items.length} itens encontrados`);
+                    } else {
+                        console.log(`ℹ️ CNPJ ${cnpj}: Nenhum item encontrado`);
+                    }
+                } catch (error) {
+                    console.error(`❌ Erro na consulta CNPJ ${cnpj}:`, error);
+                    // Continua com as outras consultas mesmo se uma falhar
                 }
 
                 // Pausa entre consultas
