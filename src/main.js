@@ -1,60 +1,36 @@
-// Versão DEBUG - src/main.js
-console.log('🚀 Carregando main.js...');
-
 import { SearchService } from './services/searchService.js';
 import { QuickSearchService } from './services/quickSearchService.js';
 import { DataProcessor } from './utils/dataProcessor.js';
 import { ExcelGenerator } from './utils/excelGenerator.js';
 import { UIManager } from './ui/uiManager.js';
 
-console.log('📦 Imports carregados com sucesso');
-
 class CommunicationSearchApp {
     constructor() {
-        console.log('🏗️ Construindo CommunicationSearchApp...');
-        try {
-            this.searchService = new SearchService();
-            console.log('✅ SearchService criado');
-            
-            this.quickSearchService = new QuickSearchService();
-            console.log('✅ QuickSearchService criado');
-            
-            this.uiManager = new UIManager();
-            console.log('✅ UIManager criado');
-        } catch (error) {
-            console.error('❌ Erro no constructor:', error);
-        }
+        this.searchService = new SearchService();
+        this.quickSearchService = new QuickSearchService();
+        this.uiManager = new UIManager();
     }
 
+    /**
+     * Inicializa a aplicação
+     */
     init() {
-        console.log('🔧 Inicializando aplicação...');
-        try {
-            this.uiManager.init();
-            console.log('✅ UIManager inicializado');
-            
-            this.setupEventListeners();
-            console.log('✅ Event listeners configurados');
-            
-            this.initializeMaterialize();
-            console.log('✅ Materialize inicializado');
-            
-            console.log('🎉 Aplicação inicializada com sucesso!');
-        } catch (error) {
-            console.error('❌ Erro na inicialização:', error);
-        }
+        this.uiManager.init();
+        this.setupEventListeners();
+        this.initializeMaterialize();
+        console.log('Aplicação inicializada');
     }
 
+    /**
+     * Inicializa componentes do Materialize
+     */
     initializeMaterialize() {
-        console.log('🎨 Inicializando Materialize...');
-        
         // Inicializa collapsible
         const collapsibles = document.querySelectorAll('.collapsible');
-        console.log(`📋 Encontrados ${collapsibles.length} collapsibles`);
         M.Collapsible.init(collapsibles);
         
         // Inicializa datepickers
         const datepickers = document.querySelectorAll('.datepicker');
-        console.log(`📅 Encontrados ${datepickers.length} datepickers`);
         M.Datepicker.init(datepickers, {
             format: 'yyyy-mm-dd',
             i18n: {
@@ -69,72 +45,185 @@ class CommunicationSearchApp {
         });
     }
 
+    /**
+     * Configura event listeners
+     */
     setupEventListeners() {
-        console.log('🔗 Configurando event listeners...');
-        
         // Função de busca normal
-        window.obterComunicacoes = () => {
-            console.log('🔍 Função obterComunicacoes chamada');
-            this.searchCommunications();
-        };
+        window.obterComunicacoes = () => this.searchCommunications();
         
         const button = document.querySelector('button[onclick="obterComunicacoes()"]');
-        console.log('�� Botão principal encontrado:', button);
         if (button) {
-            button.onclick = () => {
-                console.log('🔍 Botão principal clicado');
-                this.searchCommunications();
-            };
+            button.onclick = () => this.searchCommunications();
         }
 
         // Função de consulta rápida
         const quickButton = document.getElementById('btn-consulta-rapida');
-        console.log('⚡ Botão consulta rápida encontrado:', quickButton);
         if (quickButton) {
-            quickButton.addEventListener('click', () => {
-                console.log('⚡ Botão consulta rápida clicado');
-                this.executeQuickSearch();
-            });
+            quickButton.addEventListener('click', () => this.executeQuickSearch());
         }
     }
 
-    async executeQuickSearch() {
-        console.log('⚡ INICIANDO CONSULTA RÁPIDA');
+    /**
+     * Função principal de busca (mantida igual)
+     */
+    async searchCommunications() {
         try {
-            const quickFormData = this.uiManager.getQuickSearchFormData();
-            console.log('📝 Dados da consulta rápida:', quickFormData);
+            const formData = this.uiManager.getFormData();
+            console.log('Dados do formulário:', formData);
 
-            if (!this.validateQuickSearchData(quickFormData)) {
-                console.log('❌ Validação falhou');
+            if (!this.validateFormData(formData)) {
                 return;
             }
 
-            console.log('✅ Validação passou, iniciando consulta...');
+            this.uiManager.showLoading("Iniciando busca de comunicações...");
 
+            const searchResult = await this.searchService.searchCommunications(
+                formData,
+                (current, total) => {
+                    const message = total ? 
+                        `Buscando comunicações... (${current}/${total} páginas)` : 
+                        `Buscando comunicações... (página ${current})`;
+                    this.uiManager.showLoading(message, current, total);
+                }
+            );
+
+            console.log('=== RESULTADO DA BUSCA ===');
+            console.log(`Itens coletados: ${searchResult.items.length}`);
+            console.log(`Itens esperados: ${searchResult.expectedTotal}`);
+            console.log(`Páginas processadas: ${searchResult.totalPages}`);
+            console.log(`Coleta completa: ${searchResult.collectionComplete ? 'Sim' : 'Não'}`);
+
+            if (searchResult.items.length === 0) {
+                this.uiManager.showSuccessModal(
+                    0, 
+                    searchResult.totalPages, 
+                    "Nenhum resultado encontrado",
+                    0,
+                    0,
+                    { expectedTotal: searchResult.expectedTotal }
+                );
+                return;
+            }
+
+            this.uiManager.showLoading("Removendo duplicatas...");
+            const deduplicationResult = DataProcessor.removeDuplicates(searchResult.items);
+
+            this.uiManager.showLoading("Processando dados...");
+            const processedData = DataProcessor.processForExcel(deduplicationResult.uniqueItems);
+
+            this.uiManager.showLoading("Gerando arquivo Excel...");
+            const fileName = ExcelGenerator.generateFile(processedData);
+
+            this.uiManager.showSuccessModal(
+                deduplicationResult.uniqueItems.length,
+                searchResult.totalPages,
+                fileName,
+                deduplicationResult.duplicatesRemoved,
+                deduplicationResult.originalTotal,
+                {
+                    expectedTotal: searchResult.expectedTotal,
+                    collectionComplete: searchResult.collectionComplete
+                }
+            );
+
+        } catch (error) {
+            console.error('Erro na busca de comunicações:', error);
+            this.uiManager.showErrorModal(error.message, error.stack);
+        }
+    }
+
+    /**
+     * Executa consulta rápida - VERSÃO CORRIGIDA
+     */
+    async executeQuickSearch() {
+        try {
+            const quickFormData = this.uiManager.getQuickSearchFormData();
+            console.log('Dados da consulta rápida:', quickFormData);
+
+            if (!this.validateQuickSearchData(quickFormData)) {
+                return;
+            }
+
+            // Executa a consulta rápida
             const quickResult = await this.quickSearchService.executeQuickSearch(
                 quickFormData,
                 (current, total, query) => {
-                    console.log(`📊 Progresso: ${current}/${total} - ${query}`);
                     this.uiManager.showQuickSearchLoading(current, total, query);
                 }
             );
 
-            console.log('🎯 RESULTADO DA CONSULTA RÁPIDA:', quickResult);
+            console.log('=== RESULTADO DA CONSULTA RÁPIDA ===');
+            console.log(`Total de itens coletados: ${quickResult.items.length}`);
+            console.log(`Consultas realizadas: ${quickResult.totalQueries}`);
+            console.log('Resumo:', quickResult.summary);
 
-            // Resto do código...
-            alert(`Consulta concluída! ${quickResult.items.length} itens encontrados.`);
+            // Se não encontrou resultados
+            if (quickResult.items.length === 0) {
+                this.uiManager.showQuickSearchSuccessModal(
+                    0,
+                    quickResult.totalQueries,
+                    "Nenhum resultado encontrado",
+                    0,
+                    0,
+                    quickResult.summary
+                );
+                return;
+            }
+
+            // Processa os dados encontrados
+            console.log('🔄 Processando dados da consulta rápida...');
+            
+            this.uiManager.showLoading("Removendo duplicatas...");
+            const deduplicationResult = DataProcessor.removeDuplicates(quickResult.items);
+            console.log(`✅ Duplicatas removidas: ${deduplicationResult.duplicatesRemoved}`);
+
+            this.uiManager.showLoading("Processando dados para Excel...");
+            const processedData = DataProcessor.processForExcel(deduplicationResult.uniqueItems);
+            console.log(`✅ Dados processados: ${processedData.length} registros`);
+
+            this.uiManager.showLoading("Gerando arquivo Excel...");
+            const fileName = ExcelGenerator.generateFile(processedData);
+            console.log(`✅ Arquivo Excel gerado: ${fileName}`);
+
+            // Mostra resultado final
+            this.uiManager.showQuickSearchSuccessModal(
+                deduplicationResult.uniqueItems.length,
+                quickResult.totalQueries,
+                fileName,
+                deduplicationResult.duplicatesRemoved,
+                deduplicationResult.originalTotal,
+                quickResult.summary
+            );
 
         } catch (error) {
-            console.error('💥 ERRO na consulta rápida:', error);
-            alert(`Erro: ${error.message}`);
+            console.error('💥 Erro na consulta rápida:', error);
+            this.uiManager.showErrorModal(error.message, error.stack);
         }
     }
 
+    /**
+     * Valida dados do formulário normal
+     */
+    validateFormData(data) {
+        if (!data.nomeParte && !data.numeroOab && !data.texto) {
+            alert('Preencha pelo menos um campo de busca (Nome, OAB ou Teor)');
+            return false;
+        }
+
+        if (data.numeroOab && !data.ufOab) {
+            alert('Informe a UF da OAB');
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Valida dados da consulta rápida
+     */
     validateQuickSearchData(data) {
-        console.log('🔍 Validando dados da consulta rápida:', data);
-        
         if (!data.dataInicio || !data.dataFim) {
-            console.log('❌ Datas não preenchidas');
             alert('Informe o período (Data de Início e Data Final) para a consulta rápida');
             return false;
         }
@@ -143,37 +232,34 @@ class CommunicationSearchApp {
         const dataFim = new Date(data.dataFim);
 
         if (dataInicio > dataFim) {
-            console.log('❌ Data início maior que data fim');
             alert('A data de início deve ser anterior à data final');
             return false;
         }
 
-        console.log('✅ Validação passou');
-        return true;
-    }
+        // Verifica se o período não é muito longo (mais de 90 dias)
+        const diffTime = Math.abs(dataFim - dataInicio);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    // Função de busca normal simplificada para teste
-    async searchCommunications() {
-        console.log('🔍 INICIANDO BUSCA NORMAL');
-        alert('Busca normal iniciada - verifique o console para logs');
+        if (diffDays > 90) {
+            const confirm = window.confirm(
+                `O período selecionado é de ${diffDays} dias. ` +
+                'Períodos longos podem resultar em muitos dados e demorar mais para processar. ' +
+                'Deseja continuar?'
+            );
+            if (!confirm) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
 
-// Inicialização
-console.log('⏳ Aguardando DOM...');
+// Inicializa a aplicação quando o DOM estiver carregado
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('📄 DOM carregado, criando app...');
-    try {
-        const app = new CommunicationSearchApp();
-        app.init();
-        
-        // Torna disponível globalmente para debug
-        window.app = app;
-        console.log('🌍 App disponível globalmente como window.app');
-        
-    } catch (error) {
-        console.error('💥 ERRO CRÍTICO na inicialização:', error);
-    }
+    const app = new CommunicationSearchApp();
+    app.init();
 });
 
-console.log('📝 main.js carregado completamente');
+// Exporta para uso global se necessário
+window.CommunicationSearchApp = CommunicationSearchApp;
