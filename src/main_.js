@@ -254,3 +254,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Exporta para uso global se necessário
 window.CommunicationSearchApp = CommunicationSearchApp;
+
