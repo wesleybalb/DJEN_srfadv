@@ -10,6 +10,7 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
     />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="style/style.css" />
   </head>
   <body>
@@ -47,6 +48,67 @@
                 </p>
               </div>
             </div>
+
+            <!-- CONSULTA RÁPIDA - NOVO BLOCO -->
+            <div class="col s12" style="margin-bottom: 20px;">
+              <ul class="collapsible">
+                <li>
+                  <div class="collapsible-header">
+                    <i class="material-icons">flash_on</i>
+                    <span style="font-weight: 500;">Consulta Rápida - Fundação Oswaldo Aranha</span>
+                    <span class="badge blue white-text">5 consultas</span>
+                  </div>
+                  <div class="collapsible-body">
+                    <div class="card blue-grey lighten-5">
+                      <div class="card-content">
+                        <span class="card-title">
+                          <i class="material-icons left">info</i>
+                          Consulta Automática
+                        </span>
+                        <p>Esta opção realizará automaticamente consultas para:</p>
+                        <div class="row" style="margin-bottom: 10px;">
+                          <div class="col s12 m6">
+                            <h6><strong>OABs (RJ):</strong></h6>
+                            <ul class="browser-default">
+                              <li>118.093/RJ</li>
+                              <li>109.055/RJ</li>
+                              <li>232.861/RJ</li>
+                            </ul>
+                          </div>
+                          <div class="col s12 m6">
+                            <h6><strong>CNPJs:</strong></h6>
+                            <ul class="browser-default">
+                              <li>42.789.521/0001-10</li>
+                              <li>27.659.347/0001-05</li>
+                            </ul>
+                          </div>
+                        </div>
+                        
+                        <div class="row">
+                          <div class="col s12 m6">
+                            <label for="dataInicioRapida">Data de Início:</label>
+                            <input type="date" id="dataInicioRapida" class="datepicker">
+                          </div>
+                          <div class="col s12 m6">
+                            <label for="dataFimRapida">Data Final:</label>
+                            <input type="date" id="dataFimRapida" class="datepicker">
+                          </div>
+                        </div>
+                        
+                        <div class="center-align" style="margin-top: 20px;">
+                          <button id="btn-consulta-rapida" class="btn-large blue waves-effect waves-light">
+                            <i class="material-icons left">search</i>
+                            Executar Consulta Rápida
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </li>
+              </ul>
+            </div>
+            <!-- FIM CONSULTA RÁPIDA -->
+
             <div class="col s8 offset-s2">
               <div class="input-fiel">
                 <label class="" for="nomeParte">Nome:</label>
@@ -451,15 +513,35 @@
     </footer>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-
-    <!-- <script src="script/script.js"></script> -->
-
     <script type="module" src="src/main.js"></script>
 
     <script>
-      document.addEventListener("DOMContentLoaded", function () {
-        var elems = document.querySelectorAll("select");
-        M.FormSelect.init(elems);
+      document.addEventListener('DOMContentLoaded', function() {
+          // Inicializa todos os componentes do Materialize
+          M.AutoInit();
+          
+          // Configuração específica para selects
+          var elems = document.querySelectorAll('select');
+          M.FormSelect.init(elems);
+          
+          // Configuração para collapsibles
+          var collapsibles = document.querySelectorAll('.collapsible');
+          M.Collapsible.init(collapsibles);
+          
+          // Configuração para datepickers
+          var datepickers = document.querySelectorAll('.datepicker');
+          M.Datepicker.init(datepickers, {
+              format: 'yyyy-mm-dd',
+              i18n: {
+                  months: ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'],
+                  monthsShort: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+                  weekdays: ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'],
+                  weekdaysShort: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
+                  weekdaysAbbrev: ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'],
+                  cancel: 'Cancelar',
+                  done: 'Confirmar'
+              }
+          });
       });
     </script>
   </body>
